@@ -1,18 +1,52 @@
 const express = require('express');
+const cors = require("cors");
+const mongoose = require("mongoose");
+const passport = require("./config/passport");
+require('dotenv').config();
 
-// Creating express object
 const app = express();
 
-// Handling GET request
-app.get('/', (req, res) => { 
-    res.send('A simple Node App is '
-        + 'running on this server') 
-    res.end() 
-}) 
+// MongoDB Connection
+const mongoDB = process.env.MONGO_URI;
+(async () => {
+    try {
+        await mongoose.connect(mongoDB);
+        console.log('Successfully connected to TaskPro MongoDB');
+    } catch (err) {
+        console.error('MongoDB connection error:', err);
+    }
+})();
+
+// Import Routes
+const authRouter = require("./routes/authRouter");
+
+// Middlewares
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(cors());
+app.use(passport.initialize()); 
+
+// Routes
+app.use("/auth", authRouter);
+app.use("/auth/boards", require("./routes/boardsRoute"));
+
+app.get("/", async (req, res) => {
+    res.json({ status: 200 });
+});
+
+// Error Handling
+app.use((err, req, res, next) => {
+    res.status(err.status || 500).json({
+        status: "error",
+        code: err.status || 500,
+        message: err.message,
+        data: err.data || "Internal Server Error",
+    });
+    next(err);
+});
 
 // Port Number
-const PORT = process.env.PORT ||5000;
-
-// Server Setup
-app.listen(PORT,console.log(
-  `Server started on port ${PORT}`));
+const PORT = process.env.PORT || 2000; // Default to 2000 if PORT is not set
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
