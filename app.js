@@ -19,10 +19,7 @@ const mongoDB = process.env.MONGO_URI;
 
 // Import Routes
 const authRouter = require("./routes/authRouter");
-<<<<<<< HEAD
 const boardsRouter = require("./routes/boardsRoute");
-=======
->>>>>>> 70eec918e76c692b692555390c08255a33a9fe90
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -32,11 +29,7 @@ app.use(passport.initialize());
 
 // Routes
 app.use("/auth", authRouter);
-<<<<<<< HEAD
 app.use("/auth/boards", boardsRouter);
-=======
-app.use("/auth/boards", require("./routes/boardsRoute"));
->>>>>>> 70eec918e76c692b692555390c08255a33a9fe90
 
 app.get("/", async (req, res) => {
     res.json({ status: 200 });

@@ -73,7 +73,6 @@ router.get('/:id', passport.authenticate('jwt', { session: false }), asyncErrorH
 }));
 
 // Update a board
-<<<<<<< HEAD
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { id } = req.query;
@@ -101,31 +100,6 @@ router.delete('/', passport.authenticate('jwt', { session: false }), async (req,
         if (!id) {
             return res.status(400).json({ message: "Board ID is required" });
         }
-=======
-router.put('/:id', passport.authenticate('jwt', { session: false }), asyncErrorHandler(async (req, res) => {
-    try {
-        const { _id: owner } = req.user;
-        const { id } = req.params;
-        const { titleBoard, background, icon, filter } = await updateBoardSchema.validateAsync(req.body);
-
-        const result = await Board.findOneAndUpdate({ _id: id, owner }, { titleBoard, background, icon, filter }, { new: true });
-
-        if (!result) {
-            return res.status(404).json({ message: "Board not found" });
-        }
-
-        res.status(200).json(result);
-    } catch (error) {
-        res.status(400).json({ message: "Invalid data", error: error.message });
-    }
-}));
-
-// Delete a board
-router.delete('/:id', passport.authenticate('jwt', { session: false }), asyncErrorHandler(async (req, res) => {
-    try {
-        const { _id: owner } = req.user;
-        const { id } = req.params;
->>>>>>> 70eec918e76c692b692555390c08255a33a9fe90
 
         const result = await Board.findOneAndDelete({ _id: id, owner });
 
@@ -133,19 +107,11 @@ router.delete('/:id', passport.authenticate('jwt', { session: false }), asyncErr
             return res.status(404).json({ message: "Board not found" });
         }
 
-<<<<<<< HEAD
         res.status(200).json({ message: "Board deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
-=======
-        res.status(200).json(result);
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
-}));
->>>>>>> 70eec918e76c692b692555390c08255a33a9fe90
 
 module.exports = router;
