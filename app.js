@@ -20,6 +20,8 @@ const mongoDB = process.env.MONGO_URI;
 // Import Routes
 const authRouter = require("./routes/authRouter");
 const boardsRouter = require("./routes/boardsRoute");
+const columnsRouter = require("./routes/columnsRouter");
+const cardsRouter = require("./routes/cardsRoute");
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -30,6 +32,8 @@ app.use(passport.initialize());
 // Routes
 app.use("/auth", authRouter);
 app.use("/auth/boards", boardsRouter);
+app.use("/auth/boards/columns", columnsRouter);
+app.use("/auth/boards/columns/cards", cardsRouter);
 
 app.get("/", async (req, res) => {
     res.json({ status: 200 });

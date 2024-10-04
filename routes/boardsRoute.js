@@ -73,11 +73,11 @@ router.get('/:id', passport.authenticate('jwt', { session: false }), asyncErrorH
 }));
 
 // Update a board
-router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.put('/', passport.authenticate('jwt', { session: false }), asyncErrorHandler(async (req, res) => {
     try {
         const { id } = req.query;
         const { _id: owner } = req.user;
-        const updateData = req.body;
+        const updateData = await updateBoardSchema.validateAsync(req.body);
 
         const board = await Board.findOneAndUpdate({ _id: id, owner }, updateData, { new: true });
 
@@ -87,9 +87,10 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
 
         res.status(200).json(board);
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(400).json({ message: "Invalid data", error: error.message });
     }
-});
+}));
+
 
 // Delete a board
 router.delete('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
