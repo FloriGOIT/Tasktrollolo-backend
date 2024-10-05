@@ -5,6 +5,19 @@ const auth = require("../middlewares/auth");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+// Helper function to generate tokens
+const generateTokens = (user) => {
+    const payload = {
+        id: user.id,
+        name: user.name,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+
+    return { token, refreshToken };
+};
+
 // Register a new user
 router.post("/register", async (req, res) => {
     const { name, email, password } = req.body;
@@ -22,15 +35,30 @@ router.post("/register", async (req, res) => {
         const newUser = new User({ name, email });
         await newUser.setPassword(password);
         await newUser.save();
+
+        // Generate tokens for the new user
+        const { token, refreshToken } = generateTokens(newUser);
+
+        // Save the refresh token in the database
+        newUser.refreshToken = refreshToken;
+        await newUser.save();
+
         res.status(201).json({
             status: "success",
             code: 201,
             data: {
                 message: "Registration successful",
+                token,
+                refreshToken,
+                user: {
+                    id: newUser.id,
+                    name: newUser.name,
+                    email: newUser.email,
+                },
             },
         });
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error("Registration error:", error);
         res.status(500).json({
             status: "error",
             code: 500,
@@ -54,14 +82,8 @@ router.post("/login", async (req, res) => {
         });
     }
 
-    const payload = {
-        id: user.id,
-        username: user.username,
-    };
-
     try {
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
-        const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+        const { token, refreshToken } = generateTokens(user);
 
         // Save the refresh token in the database
         user.refreshToken = refreshToken;
@@ -73,10 +95,15 @@ router.post("/login", async (req, res) => {
             data: {
                 token,
                 refreshToken,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                },
             },
         });
     } catch (error) {
-        console.error('Token generation error:', error);
+        console.error("Token generation error:", error);
         res.status(500).json({
             status: "error",
             code: 500,
@@ -87,24 +114,51 @@ router.post("/login", async (req, res) => {
 });
 
 // Logout a user
-router.get('/logout', auth, async (req, res) => {
+router.get("/logout", auth, async (req, res) => {
     try {
         const user = req.user;
-        user.token = null;
+
+        // Remove the refresh token from the database
+        user.refreshToken = null;
         await user.save();
+
         res.status(200).json({
             status: "success",
             code: 200,
-            message: 'Successfully logged out',
+            message: "Successfully logged out",
         });
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error("Logout error:", error);
         res.status(500).json({
             status: "error",
             code: 500,
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             data: error.message,
         });
+    }
+});
+
+// Refresh token
+router.post("/refresh", async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    try {
+        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const user = await User.findById(payload.id);
+
+        if (!user || user.refreshToken !== refreshToken) {
+            return res.status(403).json({ message: "Invalid refresh token" });
+        }
+
+        const newAccessToken = jwt.sign({ id: user.id, name: user.name }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+        res.json({ token: newAccessToken });
+    } catch (error) {
+        return res.status(403).json({ message: "Invalid or expired refresh token" });
     }
 });
 
