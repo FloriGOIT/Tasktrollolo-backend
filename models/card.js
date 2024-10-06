@@ -26,6 +26,9 @@ const cardSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
+    },
+    deadline: {
+        type: Date,
     }
 }, {
     versionKey: false,
