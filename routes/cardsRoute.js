@@ -8,6 +8,7 @@ const addCardSchema = Joi.object({
     titleCard: Joi.string().required().min(1).max(100),
     description: Joi.string().max(500),
     priority: Joi.string(),
+    deadline: Joi.date().iso(),
     columnId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
     owner: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
 });
