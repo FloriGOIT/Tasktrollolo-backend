@@ -73,29 +73,34 @@ router.get('/:id', passport.authenticate('jwt', { session: false }), asyncErrorH
 }));
 
 // Update a board
-router.put('/:id', passport.authenticate('jwt', { session: false }), asyncErrorHandler(async (req, res) => {
+router.put('/', passport.authenticate('jwt', { session: false }), asyncErrorHandler(async (req, res) => {
     try {
+        const { id } = req.query;
         const { _id: owner } = req.user;
-        const { id } = req.params;
-        const { titleBoard, background, icon, filter } = await updateBoardSchema.validateAsync(req.body);
+        const updateData = await updateBoardSchema.validateAsync(req.body);
 
-        const result = await Board.findOneAndUpdate({ _id: id, owner }, { titleBoard, background, icon, filter }, { new: true });
+        const board = await Board.findOneAndUpdate({ _id: id, owner }, updateData, { new: true });
 
-        if (!result) {
+        if (!board) {
             return res.status(404).json({ message: "Board not found" });
         }
 
-        res.status(200).json(result);
+        res.status(200).json(board);
     } catch (error) {
         res.status(400).json({ message: "Invalid data", error: error.message });
     }
 }));
 
+
 // Delete a board
-router.delete('/:id', passport.authenticate('jwt', { session: false }), asyncErrorHandler(async (req, res) => {
+router.delete('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { _id: owner } = req.user;
-        const { id } = req.params;
+        const { id } = req.query;
+
+        if (!id) {
+            return res.status(400).json({ message: "Board ID is required" });
+        }
 
         const result = await Board.findOneAndDelete({ _id: id, owner });
 
@@ -103,10 +108,11 @@ router.delete('/:id', passport.authenticate('jwt', { session: false }), asyncErr
             return res.status(404).json({ message: "Board not found" });
         }
 
-        res.status(200).json(result);
+        res.status(200).json({ message: "Board deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
-}));
+});
+
 
 module.exports = router;
